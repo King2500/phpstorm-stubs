@@ -96,6 +96,49 @@ namespace PHPSTORM_META {
         return "argumentsSet " . $setName;
     }
 
+
+    // (JET)BRAINSTORMING
+
+    // simple arrays with constants
+    expectedArguments(mySetList(), 0, array(MY_FOO, MY_BAR));
+
+    // arguments for all parameters
+    expectedArguments(myVarArgs(), -1, FOO, BAR);
+
+    // key value arrays
+    registerArgumentsSet('my_options', array(
+        'foo' => -1, // default value = -1 / type = int
+        'bar' => '', // default value = '' / type = string
+        'name' => argumentType('string'), // just type info, no default  // FUN FACT: we could provide expectedArguments for argumentType itself in bundled meta :)
+        'list' => array(),  // default value = [] / type = array
+        'types' => array(MY_FOO, MY_BAR),  // array of elements with possible values
+        'object' => new \DateTime() | new \DateInterval() | null, // one or more object types
+        'mode' => argumentsSet('my_modes'),
+        'flags' => FLAG_A | FLAG_B,  // bitwise flags
+    ));
+    expectedArguments(mySetOptions(), 0, argumentsSet('my_options'));
+    expectedReturnValues(myGetOptions(), argumentsSet('my_options'));
+
+    // classes => FooBar::class
+    expectedArguments(mySetClass(), 0, argumentsClassNames()); // all classes
+    expectedArguments(mySetClass(), 0, argumentsClassNames() instanceof MyInterface); // all sub classes or implementing interface
+    // real-life example:  Symfony FormBuilder::add('field', TextType::class)
+    //  expectedArguments(\Symfony\Component\Form\FormBuilder::add(), 1, argumentsClassNames() instanceof \Symfony\Component\Form\AbstractType); // all sub classes or implementing interface
+
+    // files and dir paths (relative to current php file)
+    //  should also have reference for goto and rename refactoring (like in require etc)
+    expectedArguments(\fopen(), 0, argumentsFiles());
+    expectedArguments(\dir(), 0, argumentsDirs());
+
+    // method arguments like \bla::setOption(key, value)
+    expectedArgumentsWithKeyValues(\ini_set(), 'default_charset', 'UTF-8', 'ISO-8859-1');
+    expectedArgumentsWithKeyValues(\ini_set(), 'error_reporting', E_ALL|E_ERROR|E_WARNING|E_PARSE|E_NOTICE|E_STRICT|E_RECOVERABLE_ERROR|E_DEPRECATED|E_CORE_ERROR|E_CORE_WARNING|E_COMPILE_ERROR|E_COMPILE_WARNING|E_USER_ERROR|E_USER_WARNING|E_USER_NOTICE|E_USER_DEPRECATED);
+
+    // string prefixes
+    expectedArgumentsWithPrefix(\header(), 0, 'Content-Type: ', 'text/html', 'text/plain');
+    expectedArgumentsWithPrefix(\header(), 0, 'Allow: ', array('GET', 'HEAD', 'POST'));  // => header('Allow: GET, HEAD, <caret>')
+
+
     expectedArguments(\apc_bin_dumpfile(), 3, FILE_USE_INCLUDE_PATH, FILE_APPEND, LOCK_EX);
     expectedArguments(\apc_bin_load(), 3, APC_BIN_VERIFY_CRC32|APC_BIN_VERIFY_MD5);
     expectedArguments(\apc_bin_loadfile(), 3, APC_BIN_VERIFY_CRC32|APC_BIN_VERIFY_MD5);
